@@ -1,11 +1,9 @@
+/*jshint -W030 */
 var expect = require('chai').expect,
 	HashMap = require('../hashmap').HashMap,
 	hashmap;
 
 describe('hashmap', function() {
-	before(function() {
-	});
-
 	beforeEach(function() {
 		hashmap = new HashMap();
 	});
@@ -22,10 +20,10 @@ describe('hashmap', function() {
 			check(NaN, 'number');
 			check(1, 'number');
 			check(1.1, 'number');
-			check("1.1", 'string');
-			check("Test", 'string');
+			check('1.1', 'string');
+			check('Test', 'string');
 			check(/test/, 'regexp');
-			check(new Date, 'date');
+			check(new Date(), 'date');
 			check([], 'array');
 			check({}, 'object');
 			check(HashMap, 'function');
@@ -46,24 +44,24 @@ describe('hashmap', function() {
 			check(NaN, 'NaN');
 			check(1, '1');
 			check(1.1, '1.1');
-			check("1.1", '"1.1');
-			check("Test", '"Test');
+			check('1.1', '♠1.1');
+			check('Test', '♠Test');
 		});
 
 		it('should hash objects with primitive representation accurately', function() {
 			check(/test/, '/test/');
-			check(new Date(Date.parse("Fri, 15 Aug 1986 15:05:00 GMT")), ':524502300000');
+			check(new Date(Date.parse('Fri, 15 Aug 1986 15:05:00 GMT')), '♣524502300000');
 		});
 
 		it('should hash arrays accurately', function() {
-			check([], '[');
-			check([1, 2, 3], '[1|2|3');
+			check([], '♥');
+			check([1, 2, 3], '♥1⁞2⁞3');
 		});
 
 		it('should hash unrecognized objects accurately', function() {
-			check({}, '{1');
-			check(HashMap, '{2');
-			check(hashmap, '{3');
+			check({}, '♦1');
+			check(HashMap, '♦2');
+			check(hashmap, '♦3');
 		});
 
 		it('should not add any iterable property to objects', function() {
@@ -74,6 +72,17 @@ describe('hashmap', function() {
 
 		// TODO: expect two hashmaps to hash the same object to the same value
 		// TODO: test hash(1) !== hash('1')
+	});
+
+	describe('method chaining', function() {
+		it('should return the instance on some methods', function() {
+			expect(hashmap.set('key', 'value')).to.equal(hashmap);
+			expect(hashmap.multi()).to.equal(hashmap);
+			expect(hashmap.remove('key')).to.equal(hashmap);
+			expect(hashmap.copy(hashmap)).to.equal(hashmap);
+			expect(hashmap.clear()).to.equal(hashmap);
+			expect(hashmap.forEach(function(){})).to.equal(hashmap);
+		});
 	});
 
 	describe('hashmap.has()', function() {
@@ -87,6 +96,17 @@ describe('hashmap', function() {
 		});
 
 		// TODO: Check other types?
+	});
+
+	describe('hashmap.search()', function() {
+		it('should return null when it does not have an entry with a value', function() {
+			expect(hashmap.search('value')).to.be.null;
+		});
+
+		it('should return key under which a value is stored', function() {
+			hashmap.set('key', 'value');
+			expect(hashmap.search('value')).to.equal('key');
+		});
 	});
 
 	describe('hashmap.remove()', function() {
@@ -118,7 +138,7 @@ describe('hashmap', function() {
 			check(false);
 			check(NaN);
 			check(1);
-			check("Test");
+			check('Test');
 			check(/test/);
 			check(new Date(1986, 7, 15, 12, 5, 0, 0));
 			check([]);
@@ -139,7 +159,7 @@ describe('hashmap', function() {
 			check(false, false);
 			check(NaN, NaN);
 			check(1, 1);
-			check("Test", "Test");
+			check('Test', 'Test');
 			check(/test/, /test/);
 			check(new Date(1986, 7, 15, 12, 5, 0, 0), new Date(1986, 7, 15, 12, 5, 0, 0));
 			check([], []);
@@ -158,11 +178,12 @@ describe('hashmap', function() {
 			check(null, false);
 			check(false, 0);
 			check(false, '');
-			check(1, "1");
+			check(1, '1');
 			check(/test/, /test2/);
-			check(/test/, "/test/");
+			check(/test/, '/test/');
 			check(new Date(123456789), new Date(987654321));
 			check({}, {});
+			check(hashmap, Object.create(hashmap));
 		});
 	});
 
@@ -204,6 +225,14 @@ describe('hashmap', function() {
 			hashmap.set('key', 'value');
 			hashmap.set('key2', 'value2');
 			expect(collect()).to.deep.equal(collect());
+		});
+
+		it('should respect forEach context', function() {
+			hashmap.set('key', 'value');
+			var ctx = {};
+			hashmap.forEach(function(value, key) {
+				expect(this).to.equal(ctx);
+			}, ctx);
 		});
 	});
 
@@ -287,6 +316,100 @@ describe('hashmap', function() {
 			hashmap.set('key2', 'value2');
 			hashmap.clear();
 			expect(hashmap.count()).to.equal(0);
+		});
+	});
+
+	describe('hashmap.copy()', function() {
+		it('should work on an empty hashmap', function() {
+			var map = new HashMap();
+			map.copy(hashmap);
+			expect(map.count()).to.equal(0);
+		});
+
+		it('should copy all values', function() {
+			hashmap.set('key', 'value');
+			hashmap.set('key2', 'value2');
+
+			var map = new HashMap();
+			map.copy(hashmap);
+
+			expect(map.count()).to.equal(2);
+			expect(map.get('key')).to.equal('value');
+			expect(map.get('key2')).to.equal('value2');
+		});
+	});
+
+	describe('hashmap.clone()', function() {
+		it('should return a new hashmap', function() {
+			var clone = hashmap.clone();
+			expect(clone).to.be.instanceOf(HashMap);
+			expect(clone).not.to.equal(hashmap);
+		});
+
+		it('should work on an empty hashmap', function() {
+			var clone = hashmap.clone();
+			expect(clone.count()).to.equal(0);
+		});
+
+		it('should retain all values', function() {
+			hashmap.set('key', 'value');
+			hashmap.set('key2', 'value2');
+			var clone = hashmap.clone();
+			expect(clone.count()).to.equal(2);
+			expect(clone.get('key')).to.equal('value');
+			expect(clone.get('key2')).to.equal('value2');
+			expect(hashmap.count()).to.equal(2);
+			expect(hashmap.get('key')).to.equal('value');
+			expect(hashmap.get('key2')).to.equal('value2');
+		});
+	});
+
+	describe('hashmap.multi()', function() {
+		it('should do nothing with no arguments', function() {
+			hashmap.multi();
+			expect(hashmap.count()).to.equal(0);
+		});
+
+		it('should work with one pair', function() {
+			hashmap.multi('key', 'value');
+			expect(hashmap.count()).to.equal(1);
+			expect(hashmap.get('key')).to.equal('value');
+		});
+
+		it('should work with several pairs', function() {
+			hashmap.multi(
+				'key', 'value',
+				'key2', 'value2'
+			);
+			expect(hashmap.count()).to.equal(2);
+			expect(hashmap.get('key')).to.equal('value');
+			expect(hashmap.get('key2')).to.equal('value2');
+		});
+	});
+
+	describe('constructor', function() {
+		it('should create an empty hashmap when no arguments', function() {
+			expect(hashmap.count()).to.equal(0);
+		});
+
+		it('should clone a hashmap when one argument', function() {
+			hashmap.set('key', 'value');
+			hashmap.set('key2', 'value2');
+			
+			var map = new HashMap(hashmap);
+			expect(map.count()).to.equal(2);
+			expect(map.get('key')).to.equal('value');
+			expect(map.get('key2')).to.equal('value2');
+		});
+
+		it('should initialize with pairs when several arguments', function() {
+			var map = new HashMap(
+				'key', 'value',
+				'key2', 'value2'
+			);
+			expect(map.count()).to.equal(2);
+			expect(map.get('key')).to.equal('value');
+			expect(map.get('key2')).to.equal('value2');
 		});
 	});
 

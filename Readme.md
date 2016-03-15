@@ -2,7 +2,9 @@
 
 ## Installation
 
-Using npm:
+[![NPM](https://nodei.co/npm/hashmap.png?compact=true)](https://npmjs.org/package/hashmap)
+
+Using [npm](https://npmjs.org/package/hashmap):
 
     $ npm install hashmap
 
@@ -25,69 +27,103 @@ HashMap instances __store key/value pairs__ allowing __keys of any type__.
 
 Unlike regular objects, __keys will not be stringified__. For example numbers and strings won't be mixed, you can pass `Date`'s, `RegExp`'s, DOM Elements, anything! (even `null` and `undefined`)
 
+## HashMap constructor overloads
+- `new HashMap()` creates an empty hashmap
+- `new HashMap(map:HashMap)` creates a hashmap with the key-value pairs of `map`
+- `new HashMap(key:*, value:*, key2:*, value2:*, ...)` creates a hashmap with several key-value pairs
+
 ## HashMap methods
 
 - `get(key:*) : *` returns the value stored for that key.
-- `set(key:*, value:*) : void` stores a key-value pair
+- `set(key:*, value:*) : HashMap` stores a key-value pair
+- `multi(key:*, value:*, key2:*, value2:*, ...) : HashMap` stores several key-value pairs
+- `copy(other:HashMap) : HashMap` copies all key-value pairs from other to this instance
 - `has(key:*) : Boolean` returns whether a key is set on the hashmap
-- `remove(key:*) : void` deletes a key-value pair by key
+- `search(value:*) : *` returns key under which given value is stored (`null` if not found)
+- `remove(key:*) : HashMap` deletes a key-value pair by key
 - `type(key:*) : String` returns the data type of the provided key (used internally)
 - `keys() : Array<*>` returns an array with all the registered keys
 - `values() : Array<*>` returns an array with all the values
 - `count() : Number` returns the amount of key-value pairs
-- `clear() : void` removes all the key-value pairs on the hashmap
+- `clear() : HashMap` removes all the key-value pairs on the hashmap
+- `clone() : HashMap` creates a new hashmap with all the key-value pairs of the original
 - `hash(key:*) : String` returns the stringified version of a key (used internally)
-- `forEach(function(value, key))` iterates the pairs and calls the function for each one
+- `forEach(function(value, key)) : HashMap` iterates the pairs and calls the function for each one
+
+### Method chaining
+
+All methods that don't return something, will return the HashMap instance to enable chaining.
 
 ## Examples
 
 Assume this for all examples below
 
-	var map = new HashMap();
+```js
+var map = new HashMap();
+```
 
 If you're using this within Node, you first need to import the class
 
-	var HashMap = require('hashmap').HashMap;
- 
+```js
+var HashMap = require('hashmap');
+```
+
 ### Basic use case
 
-	map.set("some_key", "some value");
-	map.get("some_key"); // --> "some value"
- 
+```js
+map.set("some_key", "some value");
+map.get("some_key"); // --> "some value"
+```
 ### No stringification
 
-	map.set("1", "string one");
-	map.set(1, "number one");
-	map.get("1"); // --> "string one"
+```js
+map.set("1", "string one");
+map.set(1, "number one");
+map.get("1"); // --> "string one"
+```
 
 A regular `Object` used as a map would yield `"number one"`
 
-###  Objects as keys
+### Objects as keys
 
-	var key = {};
-	var key2 = {};
-	map.set(key, 123);
-	map.set(key2, 321);
-	map.get(key); // --> 123
-
+```js
+var key = {};
+var key2 = {};
+map.set(key, 123);
+map.set(key2, 321);
+map.get(key); // --> 123
+```
 A regular `Object` used as a map would yield `321`
 
-###  Iterating
+### Iterating
 
-    map.set(1, "test 1");
-    map.set(2, "test 2");
-    map.set(3, "test 3");
-    
-    map.forEach(function(value, key) {
-        console.log(key + " : " + value);
-    });
+```js
+map.set(1, "test 1");
+map.set(2, "test 2");
+map.set(3, "test 3");
 
+map.forEach(function(value, key) {
+    console.log(key + " : " + value);
+});
+```
+
+### Method chaining
+
+```js
+map
+  .set(1, "test 1")
+  .set(2, "test 2")
+  .set(3, "test 3")
+  .forEach(function(value, key) {
+      console.log(key + " : " + value);
+  });
+```
 
 ## LICENSE
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Ariel Flesler
+Copyright (c) 2012-2015 Ariel Flesler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -106,8 +142,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF
 
-## TODO's
+## To-Do
 
 * (?) Allow extending the hashing function in a AOP way or by passing a service
 * Make tests work on the browser
-* Document the public API of HashMap's
